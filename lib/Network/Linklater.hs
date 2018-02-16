@@ -30,6 +30,7 @@ module Network.Linklater
          Command(..),
          Icon(..),
          Format(..),
+         ResponseType(..),
          -- * API calls
          say,
          startRTM,

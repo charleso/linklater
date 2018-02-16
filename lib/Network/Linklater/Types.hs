@@ -64,8 +64,12 @@ data Format =
 --   * Complex messages are parsed according to Slack formatting. See 'Format'.
 --
 data Message =
-    SimpleMessage !Icon !Text !Channel !Text
-  | FormattedMessage !Icon !Text !Channel ![Format]
+    SimpleMessage !Icon !Text !Channel !ResponseType !Text
+  | FormattedMessage !Icon !Text !Channel !ResponseType ![Format]
+
+data ResponseType =
+    InChannel
+  | Ephemeral
 
 -- | Like a curiosity about the world, you'll need one of these to
 -- 'say' something.
@@ -153,16 +157,21 @@ instance ToJSON Channel where
 
 instance ToJSON Message where
   toJSON m = case m of
-    (FormattedMessage emoji username channel formats) ->
-      toJSON_ emoji username channel (Text.unwords (unformat <$> formats)) False
-    (SimpleMessage emoji username channel text) ->
-      toJSON_ emoji username channel text True
+    (FormattedMessage emoji username channel rt formats) ->
+      toJSON_ emoji username channel rt (Text.unwords (unformat <$> formats)) False
+    (SimpleMessage emoji username channel rt text) ->
+      toJSON_ emoji username channel rt text True
     where
-      toJSON_ (EmojiIcon emoji) username channel raw toParse =
+      toJSON_ (EmojiIcon emoji) username channel rt raw toParse =
         object [ "channel" .= channel
                , "icon_emoji" .= (":" <> emoji <> ":")
                , "parse" .= String (if toParse then "full" else "poop")
                , "username" .= username
                , "text" .= raw
                , "unfurl_links" .= True
+               , "response_type" .= case rt of
+                   InChannel ->
+                     ("in_channel" :: Text)
+                   Ephemeral ->
+                     ("ephemeral" :: Text)
                ]
