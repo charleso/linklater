@@ -38,6 +38,7 @@ module Network.Linklater
          -- * HTTP bot servers
          slash,
          slashSimple,
+         slashMessage,
        ) where
 
 import qualified Data.Aeson as Aeson
@@ -70,6 +71,12 @@ responseOf status message =
 slashSimple :: (Command -> IO Text) -> Application
 slashSimple f =
   slash (\command _ respond -> f command >>= (respond . responseOf status200))
+
+slashMessage :: (Command -> IO Message) -> Application
+slashMessage f =
+  slash $ \command _ respond ->
+    f command >>=
+      respond . responseLBS status200 [("Content-Type", "application/json")] . Aeson.encode
 
 -- | A bot server! As if by magic. This acts like a 'Network.WAI'
 -- middleware: Linklater wraps around your application. (Really, it
